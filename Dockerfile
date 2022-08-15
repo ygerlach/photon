@@ -17,7 +17,7 @@ RUN ls -sahlS target/photon-*.jar
 FROM openjdk:17-jdk-alpine3.14 as photon
 
 RUN apk -U upgrade --update && \
-    	apk --no-cache add sudo xz bash && \
+    	apk --no-cache add sudo xz bash pv && \
         rm -rf /var/cache/apk/*
 
 RUN	adduser -D -s /bin/bash -h /photon photon && \
@@ -26,7 +26,7 @@ RUN	adduser -D -s /bin/bash -h /photon photon && \
 USER photon:photon
 WORKDIR /photon
 
-COPY --from=photon-builder /photon/target/photon-*.jar /photon/
+COPY --from=photon-builder /photon/target/photon-*.jar /photon/photon.jar
 RUN sudo chown -R "$USER":root /photon
 
 # Inspired by https://github.com/thomasnordquist/photon-docker

@@ -3,13 +3,14 @@
 
 # Extract elasticsearch index
 if [ ! -d "/photon/photon_data/elasticsearch" ]; then
-  echo "Search index not yet extracted"
+  echo "Search index not found"
   if [ ! -f "/photon/photon_data/photon-db-latest.tar.xz" ]; then
     echo "Couldn't find photon-db-latest.tar.xz."
     echo "Please add it to the photon_data volume."
   fi
-  echo "Extract search index"
-  tar xf photon-db-latest.tar.xz
+  echo "Extract search index. This may take a while."
+  (pv --force -p "/photon/photon_data/photon-db-latest.tar.xz" | tar xp -J --strip-components=1 -C /photon/photon_data/) 2>&1 | stdbuf -o0 tr '\r' '\n'
+
 fi
 
 # Start photon if elastic index exists
