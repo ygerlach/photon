@@ -1,27 +1,19 @@
-FROM openjdk:17-jdk-alpine3.14 as photon-builder
-
-
-# Install pbzip2 for parallel extraction
-RUN apk -U upgrade --update && \
-    	apk --no-cache add maven && \
-        rm -rf /var/cache/apk/*
+ARG JAVA_VERSION=21
+FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS photon-builder
 
 WORKDIR /photon
-COPY ./es /photon/es
-COPY ./src /photon/src
-COPY ./pom.xml /photon/pom.xml
+COPY . .
 
-ARG SKIP_TESTS=true
-ARG CORES=2
-
-RUN mvn -T ${CORES:-$(nproc)} --no-transfer-progress package -Dmaven.test.skip=$SKIP_TESTS
+# trigger a gradle download
+RUN apk --no-cache add git
+RUN ./gradlew --version
+RUN ./gradlew build --info
 
 RUN ls -sahlS target/photon-*.jar
 
-FROM openjdk:17-jdk-alpine3.14 as photon
+FROM eclipse-temurin:$JAVA_VERSION-jre-alpine AS photon
 
-RUN apk -U upgrade --update && \
-    apk add pixz --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ && \
+RUN apk add pixz --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ && \
     apk --no-cache add sudo bash pv coreutils outils-md5 && \
     rm -rf /var/cache/apk/*
 
@@ -39,4 +31,4 @@ COPY --chown=photon:photon entrypoint.sh /photon/entrypoint.sh
 
 RUN chmod +x /photon/entrypoint.sh
 
-ENTRYPOINT /photon/entrypoint.sh
+ENTRYPOINT ["/photon/entrypoint.sh"]
